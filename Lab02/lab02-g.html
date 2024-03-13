@@ -50,31 +50,27 @@ function startGL()
 
   let vertexPosition = [
     //Top
-    -0.5, 0.5, 0.0, -0.7, 0.3, 0.0, 0.8, 0.3, 0.0, 
-    -0.5, 0.5, 0.0, 0.5, 0.5, 0.0, 0.8, 0.3, 0.0,
-    
+    -0.5,0.5,0.0,   -0.7,0.3,0.0,   0.8,0.3,0.0, 
+    -0.5,0.5,0.0,   0.5,0.5,0.0,    0.8,0.3,0.0,
     //Left
-    -0.7, 0.3, 0.0, -0.5, 0.3, 0.0, -0.7, -0.8, 0.0, 
-    -0.7, -0.8, 0.0, -0.5,-0.8,0.0, -0.5, 0.3,0.0,
-
+    -0.7,0.3,0.0,   -0.5, 0.3,0.0,  -0.7,-0.8,0.0, 
+    -0.7,-0.8,0.0,  -0.5,-0.8,0.0,  -0.5,0.3,0.0,
     //Bottom
-    -0.7, -0.8, 0.0,  -0.5, -1.0, 0.0,  0.6, -1.0, 0.0,
-    0.5,  -1.0, 0.0,   0.8,  -0.8, 0.0,  -0.7, -0.8, 0.0,
-
+    -0.7,-0.8,0.0,  -0.5,-1.0,0.0,  0.6,-1.0,0.0,
+    0.5,-1.0,0.0,   0.8,-0.8,0.0,   -0.7,-0.8,0.0,
     // Right
-    0.8,-0.8,0.0,  0.6,-0.8,0.0,  0.8,-0.1,0.0,
-    0.6,-0.8,0.0,  0.6,-0.1,0.0, 0.8,-0.1,0.0,
-
+    0.8,-0.8,0.0,   0.6,-0.8,0.0,   0.8,-0.1,0.0,
+    0.6,-0.8,0.0,   0.6,-0.1,0.0,   0.8,-0.1,0.0,
     // Center
-    0.6,-0.1,0.0, 0.6,-0.3,0.0, 0.0,-0.1,0.0,
-    0.0,-0.1,0.0, 0.0,-0.3,0.0, 0.6,-0.3,0.0
+    0.6,-0.1,0.0,   0.6,-0.3,0.0,   0.0,-0.1,0.0,
+    0.0,-0.1,0.0,   0.0,-0.3,0.0,   0.6,-0.3,0.0
   ];
 
   let vertexPositionBuffer = gl.createBuffer(); //Stworzenie tablicy w pamieci karty graficznej
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexPosition), gl.STATIC_DRAW);
   vertexPositionBuffer.itemSize = 3; //zdefiniowanie liczby współrzednych per wierzchołek
-  vertexPositionBuffer.numItems = 12; //Zdefinoiowanie liczby punktów w naszym buforze
+  vertexPositionBuffer.numItems = 10; //Zdefinoiowanie liczby punktów w naszym buforze
   
   //Macierze opisujące położenie wirtualnej kamery w przestrzenie 3D
   let aspect = gl.viewportWidth/gl.viewportHeight;
