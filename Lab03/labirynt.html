@@ -3,6 +3,35 @@
 <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
 <script type="text/javascript">
 var gl;
+var shaderProgram;
+var uPMatrix;
+var vertexPositionBuffer;
+var vertexColorBuffer;
+
+function MatrixMul(a,b) //Mnożenie macierzy
+{
+  c = [
+  0,0,0,0,
+  0,0,0,0,
+  0,0,0,0,
+  0,0,0,0
+  ];
+  for(let i=0;i<4;i++)
+  {
+    for(let j=0;j<4;j++)
+    {
+      c[i*4+j] = 0.0;
+      for(let k=0;k<4;k++)
+      {
+        c[i*4+j]+= a[i*4+k] * b[k*4+j];
+      }
+    }
+  }
+
+
+  return c;
+}
+
 function startGL() 
 {
 //   alert("StartGL");
@@ -40,7 +69,7 @@ function startGL()
     return null;
   }
   
-  let shaderProgram = gl.createProgram(); //Stworzenie obiektu programu 
+  shaderProgram = gl.createProgram(); //Stworzenie obiektu programu 
   gl.attachShader(shaderProgram, vertexShader); //Podpięcie obu shaderów do naszego programu wykonywanego na karcie graficznej
   gl.attachShader(shaderProgram, fragmentShader);
   gl.linkProgram(shaderProgram);
@@ -49,16 +78,16 @@ function startGL()
   //Opis sceny 3D, położenie punktów w przestrzeni 3D w formacie X,Y,Z 
   let vertexPosition = [
   //Top
-    -5.5, +4.5, 0.0,  +7.5, +4.5, 0.0,  -5.5, +3.8, 0.0, //3 punkty po 3 składowe - X1,Y1,Z1, X2,Y2,Z2, X3,Y3,Z3 - 1 trójkąt
-    -5.5, +3.8, 0.0,  +7.5, +3.8, 0.0,  +7.5, +4.5, 0.0,
+    -5.5, +4.3, 0.0,  +5.6, +4.3, 0.0,  -5.5, +3.8, 0.0, //3 punkty po 3 składowe - X1,Y1,Z1, X2,Y2,Z2, X3,Y3,Z3 - 1 trójkąt
+    -5.5, +3.8, 0.0,  +5.6, +3.8, 0.0,  +5.6, +4.3, 0.0,
   //Right
     +5.6, +4.0, 0.0,  +5.6, +0.5, 0.0,  +5.1, +0.5, 0.0,
     +5.1, +4.0, 0.0,  +5.6, +4.0, 0.0,  +5.1, +0.5, 0.0,
     +5.6, -0.5, 0.0,  +5.6, -4.2, 0.0,  +5.1, -4.2, 0.0,
     +5.1, -0.5, 0.0,  +5.6, -0.5, 0.0,  +5.1, -4.2, 0.0,
   //Bottom
-    -5.5, -3.7, 0.0,  +7.5, -4.2, 0.0,  -5.5, -4.2, 0.0,
-    -5.5, -3.7, 0.0,  +7.5, -4.2, 0.0,  +7.5, -3.7, 0.0,
+    -5.5, -3.7, 0.0,  +5.6, -4.2, 0.0,  -5.5, -4.2, 0.0,
+    -5.5, -3.7, 0.0,  +5.6, -4.2, 0.0,  +5.6, -3.7, 0.0,
   //Left
     -5.5, +4.0, 0.0,  -5.5, +0.5, 0.0,  -5.0, +0.5, 0.0,
     -5.5, +4.0, 0.0,  -5.0, +0.5, 0.0,  -5.0, +4.0, 0.0,
@@ -95,7 +124,7 @@ function startGL()
 
   ]
   
-  let vertexPositionBuffer = gl.createBuffer(); //Stworzenie tablicy w pamieci karty graficznej
+  vertexPositionBuffer = gl.createBuffer(); //Stworzenie tablicy w pamieci karty graficznej
   gl.bindBuffer(gl.ARRAY_BUFFER, vertexPositionBuffer);
   gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(vertexPosition), gl.STATIC_DRAW);
   vertexPositionBuffer.itemSize = 3; //zdefiniowanie liczby współrzednych per wierzchołek
@@ -106,20 +135,78 @@ function startGL()
   let fov = 45.0 * Math.PI / 180.0; //Określenie pola widzenia kamery
   let zFar = 100.0; //Ustalenie zakresów renderowania sceny 3D (od obiektu najbliższego zNear do najdalszego zFar)
   let zNear = 0.1;
-  let uPMatrix = [
+  uPMatrix = [
    1.0/(aspect*Math.tan(fov/2)),0                           ,0                         ,0                            ,
    0                         ,1.0/(Math.tan(fov/2))         ,0                         ,0                            ,
    0                         ,0                           ,-(zFar+zNear)/(zFar-zNear)  , -1,
    0                         ,0                           ,-(2*zFar*zNear)/(zFar-zNear) ,0.0,
   ];
-  let angle = 0.0; //Macierz transformacji świata - określenie położenia kamery 
+  Tick();
+} 
+var angleZ = 0.0;
+var angleY = 0.0;
+var angleX = 0.0;
+var tz = -3.0;
+var sx = 7.0;
+var ty = 0.0;
+
+function Tick()
+{  
   let uMVMatrix = [
-  Math.cos(angle*Math.PI/180.0),-Math.sin(angle*Math.PI/180.0),0,0, //Macierz Rotacji
-  Math.sin(angle*Math.PI/180.0),Math.cos(angle*Math.PI/180.0),0,0,
-  0,0,1,0.0,
-  0,0,-10,1 //Położenie kamery
+  1,0,0,0, //Macierz jednostkowa
+  0,1,0,0,
+  0,0,1,0,
+  0,0,0,1
   ];
   
+  let uMVRotZ = [
+  +Math.cos(angleZ*Math.PI/180.0),+Math.sin(angleZ*Math.PI/180.0),0,0,
+  -Math.sin(angleZ*Math.PI/180.0),+Math.cos(angleZ*Math.PI/180.0),0,0,
+  0,0,1,0,
+  0,0,0,1
+  ];
+  
+  let uMVRotY = [
+  +Math.cos(angleY*Math.PI/180.0),0,-Math.sin(angleY*Math.PI/180.0),0,
+  0,1,0,0,
+  +Math.sin(angleY*Math.PI/180.0),0,+Math.cos(angleY*Math.PI/180.0),0,
+  0,0,0,1
+  ];
+  
+  let uMVRotX = [
+  1,0,0,0,
+  0,+Math.cos(angleX*Math.PI/180.0),+Math.sin(angleX*Math.PI/180.0),0,
+  0,-Math.sin(angleX*Math.PI/180.0),+Math.cos(angleX*Math.PI/180.0),0,
+  0,0,0,1
+  ];
+  
+  let uMVTranslateX = [
+  1,0,0,0,
+  0,1,0,0,
+  0,0,1,0,
+  sx,0,0,1
+  ];
+
+  let uMVTranslateY = [
+  1, 0, 0, 0,
+  0, 1, 0, 0,
+  0, 0, 1, 0,
+  0, ty, 0, 1
+  ];
+
+  let uMVTranslateZ = [
+  1,0,0,0,
+  0,1,0,0,
+  0,0,1,0,
+  0,0,tz,1
+  ];
+
+  uMVMatrix = MatrixMul(uMVMatrix,uMVRotX);
+  uMVMatrix = MatrixMul(uMVMatrix,uMVRotY);
+  uMVMatrix = MatrixMul(uMVMatrix,uMVRotZ);
+  uMVMatrix = MatrixMul(uMVMatrix,uMVTranslateX);
+  uMVMatrix = MatrixMul(uMVMatrix,uMVTranslateY);
+  uMVMatrix = MatrixMul(uMVMatrix,uMVTranslateZ);
   //alert(uPMatrix);
   
   //Render Scene
@@ -140,11 +227,22 @@ function startGL()
   gl.vertexAttribPointer(gl.getAttribLocation(shaderProgram, "aVertexPosition"), vertexPositionBuffer.itemSize, gl.FLOAT, false, 0, 0);
   
   gl.drawArrays(gl.TRIANGLES, 0, vertexPositionBuffer.numItems*vertexPositionBuffer.itemSize); //Faktyczne wywołanie rendrowania
-   
+  setTimeout(Tick,100);
+}
+function handlekeydown(e)
+{
+ if(e.keyCode==87) ty -= 0.1; //W
+ if(e.keyCode==83) ty += 0.1; //S
+ if(e.keyCode==65) sx += 0.1; //A
+ if(e.keyCode==68) sx -= 0.1; //D
+ if(e.keyCode==81) tz -= 0.1; //Q
+ if(e.keyCode==69) tz += 0.1; //E
+ //alert(e.keyCode);
+ //alert(angleX);
 }
 </script>
 </head>
-<body onload="startGL()">
+<body onload="startGL()" onkeydown="handlekeydown(event)">
 <canvas id="canvas3D" width="640" height="480" style="border: solid black 1px"></canvas>
 </body>
 </html>
